@@ -1,4 +1,4 @@
-package com.chatmc.network;
+package com.lipi.network;
 
 import net.minecraft.network.RegistryByteBuf;
 import net.minecraft.network.codec.PacketCodec;
@@ -8,10 +8,10 @@ import net.minecraft.util.Identifier;
 import java.util.UUID;
 
 /**
- * Client → Server packet.
- * Sent when a player sends a message while ChatMC mode is active.
+ * Server → All Clients packet.
+ * Broadcast when the server relays a Lipi message to all connected Lipi players.
  */
-public record ChatMessagePayload(
+public record ChatBroadcastPayload(
         UUID senderUuid,
         String playerName,
         String message,
@@ -19,10 +19,10 @@ public record ChatMessagePayload(
         String channel
 ) implements CustomPayload {
 
-    public static final CustomPayload.Id<ChatMessagePayload> ID =
-            new CustomPayload.Id<>(Identifier.of("chatmc", "chat_message"));
+    public static final CustomPayload.Id<ChatBroadcastPayload> ID =
+            new CustomPayload.Id<>(Identifier.of("lipi", "chat_broadcast"));
 
-    public static final PacketCodec<RegistryByteBuf, ChatMessagePayload> CODEC = PacketCodec.of(
+    public static final PacketCodec<RegistryByteBuf, ChatBroadcastPayload> CODEC = PacketCodec.of(
             (value, buf) -> {
                 buf.writeUuid(value.senderUuid());
                 buf.writeString(value.playerName());
@@ -30,7 +30,7 @@ public record ChatMessagePayload(
                 buf.writeVarLong(value.timestamp());
                 buf.writeString(value.channel());
             },
-            buf -> new ChatMessagePayload(
+            buf -> new ChatBroadcastPayload(
                     buf.readUuid(),
                     buf.readString(),
                     buf.readString(),

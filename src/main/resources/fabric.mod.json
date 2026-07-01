@@ -1,29 +1,29 @@
 {
   "schemaVersion": 1,
-  "id": "chatmc",
+  "id": "lipi",
   "version": "${version}",
-  "name": "ChatMC",
-  "description": "A lightweight, independent chat system that runs alongside vanilla Minecraft chat. ChatMC is a server-controlled communication tool. Chat logs are stored locally on the server machine. Server operators are solely responsible for moderation, log storage, retention, and compliance with applicable laws in their jurisdiction.",
+  "name": "Lipi",
+  "description": "A lightweight, independent chat system that runs alongside vanilla Minecraft chat. Lipi is a server-controlled communication tool. Chat logs are stored locally on the server machine. Server operators are solely responsible for moderation, log storage, retention, and compliance with applicable laws in their jurisdiction.",
   "authors": [
-    "ChatMC Team"
+    "Lipi Team"
   ],
   "contact": {},
   "license": "MIT",
-  "icon": "assets/chatmc/icon.png",
+  "icon": "assets/lipi/icon.png",
   "environment": "*",
   "entrypoints": {
     "main": [
-      "com.chatmc.ChatMC"
+      "com.lipi.Lipi"
     ],
     "client": [
-      "com.chatmc.client.ChatMCClient"
+      "com.lipi.client.LipiClient"
     ],
     "server": [
-      "com.chatmc.server.ChatMCServer"
+      "com.lipi.server.LipiServer"
     ]
   },
   "mixins": [
-    "chatmc.mixins.json"
+    "lipi.mixins.json"
   ],
   "depends": {
     "fabricloader": ">=0.16.0",

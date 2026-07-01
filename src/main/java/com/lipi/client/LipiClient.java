@@ -1,12 +1,12 @@
-package com.chatmc.client;
+package com.lipi.client;
 
-import com.chatmc.ChatMC;
-import com.chatmc.client.config.ChatMCClientConfig;
-import com.chatmc.client.gui.ChatMCOverlay;
-import com.chatmc.network.ChatBroadcastPayload;
-import com.chatmc.network.ChatHistoryPayload;
-import com.chatmc.network.ChatMessagePayload;
-import com.chatmc.network.ServerStatusPayload;
+import com.lipi.Lipi;
+import com.lipi.client.config.LipiClientConfig;
+import com.lipi.client.gui.LipiOverlay;
+import com.lipi.network.ChatBroadcastPayload;
+import com.lipi.network.ChatHistoryPayload;
+import com.lipi.network.ChatMessagePayload;
+import com.lipi.network.ServerStatusPayload;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
@@ -28,56 +28,56 @@ import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
 /**
- * Client-side initializer for ChatMC.
+ * Client-side initializer for Lipi.
  * Handles keybind registration, chat interception, and network receivers.
  */
-public class ChatMCClient implements ClientModInitializer {
+public class LipiClient implements ClientModInitializer {
 
-    /** Whether ChatMC mode is currently active (player is typing in ChatMC mode). */
+    /** Whether Lipi mode is currently active (player is typing in Lipi mode). */
     public static boolean active = false;
 
-    /** Whether the current server supports ChatMC (has the mod installed). */
+    /** Whether the current server supports Lipi (has the mod installed). */
     public static boolean serverSupported = false;
 
-    /** Whether ChatMC is enabled on the server. */
+    /** Whether Lipi is enabled on the server. */
     public static boolean serverEnabled = true;
 
-    /** The keybinding to toggle ChatMC mode. */
+    /** The keybinding to toggle Lipi mode. */
     private static KeyBinding toggleKey;
 
     /** Client config instance. */
-    public static ChatMCClientConfig config;
+    public static LipiClientConfig config;
 
     private static final DateTimeFormatter TIME_FORMATTER =
             DateTimeFormatter.ofPattern("HH:mm:ss").withZone(ZoneId.systemDefault());
 
     @Override
     public void onInitializeClient() {
-        ChatMC.LOGGER.info("ChatMC client initializing...");
+        Lipi.LOGGER.info("Lipi client initializing...");
 
         // Load client config
-        config = new ChatMCClientConfig();
+        config = new LipiClientConfig();
         config.load();
 
         // Register keybind: Right Shift
         toggleKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-                "key.chatmc.toggle",
+                "key.lipi.toggle",
                 InputUtil.Type.KEYSYM,
                 GLFW.GLFW_KEY_RIGHT_SHIFT,
-                "category.chatmc"
+                "category.lipi"
         ));
 
         // Register overlay renderer
-        ChatMCOverlay.register();
+        LipiOverlay.register();
 
         // Handle keybind press each tick
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             while (toggleKey.wasPressed()) {
                 if (!serverSupported) {
-                    // Server doesn't have ChatMC
+                    // Server doesn't have Lipi
                     if (client.player != null) {
                         client.player.sendMessage(
-                                Text.literal("This server does not support ChatMC")
+                                Text.literal("This server does not support Lipi")
                                         .formatted(Formatting.RED),
                                 false
                         );
@@ -88,7 +88,7 @@ public class ChatMCClient implements ClientModInitializer {
                 if (!serverEnabled) {
                     if (client.player != null) {
                         client.player.sendMessage(
-                                Text.literal("ChatMC is currently disabled on this server")
+                                Text.literal("Lipi is currently disabled on this server")
                                         .formatted(Formatting.YELLOW),
                                 false
                         );
@@ -102,15 +102,15 @@ public class ChatMCClient implements ClientModInitializer {
                 if (client.player != null) {
                     if (active) {
                         client.player.sendMessage(
-                                Text.literal("[ChatMC] ")
+                                Text.literal("[Lipi] ")
                                         .formatted(Formatting.AQUA)
-                                        .append(Text.literal("Chat mode activated. Messages will be sent via ChatMC.")
+                                        .append(Text.literal("Chat mode activated. Messages will be sent via Lipi.")
                                                 .formatted(Formatting.GRAY)),
                                 false
                         );
                     } else {
                         client.player.sendMessage(
-                                Text.literal("[ChatMC] ")
+                                Text.literal("[Lipi] ")
                                         .formatted(Formatting.AQUA)
                                         .append(Text.literal("Chat mode deactivated. Using vanilla chat.")
                                                 .formatted(Formatting.GRAY)),
@@ -121,7 +121,7 @@ public class ChatMCClient implements ClientModInitializer {
             }
         });
 
-        // Intercept chat messages when ChatMC is active
+        // Intercept chat messages when Lipi is active
         ClientSendMessageEvents.ALLOW_CHAT.register(message -> {
             if (!active || !serverSupported || !serverEnabled) {
                 return true; // Allow vanilla chat
@@ -130,7 +130,7 @@ public class ChatMCClient implements ClientModInitializer {
             MinecraftClient client = MinecraftClient.getInstance();
             if (client.player == null) return true;
 
-            // Send via ChatMC packet instead
+            // Send via Lipi packet instead
             UUID playerUuid = client.player.getUuid();
             String playerName = client.player.getName().getString();
             long timestamp = System.currentTimeMillis();
@@ -151,19 +151,19 @@ public class ChatMCClient implements ClientModInitializer {
 
         // Register network receivers for S2C packets
 
-        // Server status - confirms ChatMC is available
+        // Server status - confirms Lipi is available
         ClientPlayNetworking.registerGlobalReceiver(ServerStatusPayload.ID, (payload, context) -> {
             context.client().execute(() -> {
                 serverSupported = true;
                 serverEnabled = payload.active();
-                ChatMC.LOGGER.info("Server supports ChatMC. Enabled: {}", serverEnabled);
+                Lipi.LOGGER.info("Server supports Lipi. Enabled: {}", serverEnabled);
 
                 MinecraftClient client = context.client();
                 if (client.player != null) {
                     client.player.sendMessage(
-                            Text.literal("[ChatMC] ")
+                            Text.literal("[Lipi] ")
                                     .formatted(Formatting.AQUA)
-                                    .append(Text.literal("Connected! Press Right Shift to toggle ChatMC mode.")
+                                    .append(Text.literal("Connected! Press Right Shift to toggle Lipi mode.")
                                             .formatted(Formatting.GRAY)),
                             false
                     );
@@ -179,9 +179,9 @@ public class ChatMCClient implements ClientModInitializer {
 
                 String timeStr = TIME_FORMATTER.format(Instant.ofEpochMilli(payload.timestamp()));
 
-                // Format: [ChatMC] [HH:mm:ss] playerName: message
+                // Format: [Lipi] [HH:mm:ss] playerName: message
                 MutableText chatText = Text.literal("")
-                        .append(Text.literal("[ChatMC] ").styled(s -> s.withColor(0x55FFFF)))
+                        .append(Text.literal("[Lipi] ").styled(s -> s.withColor(0x55FFFF)))
                         .append(Text.literal("[" + timeStr + "] ").formatted(Formatting.DARK_GRAY))
                         .append(Text.literal(payload.playerName()).formatted(Formatting.WHITE))
                         .append(Text.literal(": ").formatted(Formatting.GRAY))
@@ -200,7 +200,7 @@ public class ChatMCClient implements ClientModInitializer {
                 if (!payload.lines().isEmpty()) {
                     // Header
                     client.inGameHud.getChatHud().addMessage(
-                            Text.literal("--- ChatMC History ---")
+                            Text.literal("--- Lipi History ---")
                                     .styled(s -> s.withColor(0x55FFFF).withItalic(true))
                     );
 
@@ -225,6 +225,6 @@ public class ChatMCClient implements ClientModInitializer {
             serverEnabled = true;
         });
 
-        ChatMC.LOGGER.info("ChatMC client initialized.");
+        Lipi.LOGGER.info("Lipi client initialized.");
     }
 }

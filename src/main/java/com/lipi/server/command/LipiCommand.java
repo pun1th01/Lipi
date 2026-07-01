@@ -1,7 +1,7 @@
-package com.chatmc.server.command;
+package com.lipi.server.command;
 
-import com.chatmc.ChatMC;
-import com.chatmc.server.ChatMCServer;
+import com.lipi.Lipi;
+import com.lipi.server.LipiServer;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
@@ -16,40 +16,40 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * Admin commands for ChatMC.
+ * Admin commands for Lipi.
  *
- * /chatmc mute <player>   — mutes a player (silently drops their packets)
- * /chatmc unmute <player>  — unmutes a player
- * /chatmc toggle           — enables/disables ChatMC on the server
- * /chatmc log <player>     — shows last 10 messages from a player in today's log
+ * /lipi mute <player>   — mutes a player (silently drops their packets)
+ * /lipi unmute <player>  — unmutes a player
+ * /lipi toggle           — enables/disables Lipi on the server
+ * /lipi log <player>     — shows last 10 messages from a player in today's log
  */
-public class ChatMCCommand {
+public class LipiCommand {
 
     private static final int OP_PERMISSION_LEVEL = 3;
 
-    private ChatMCCommand() {
+    private LipiCommand() {
         // Utility class
     }
 
     /**
-     * Registers all /chatmc subcommands.
+     * Registers all /lipi subcommands.
      */
     public static void register() {
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
             dispatcher.register(
-                    CommandManager.literal("chatmc")
+                    CommandManager.literal("lipi")
                             .requires(source -> source.hasPermissionLevel(OP_PERMISSION_LEVEL))
                             .then(CommandManager.literal("mute")
                                     .then(CommandManager.argument("player", GameProfileArgumentType.gameProfile())
-                                            .executes(ChatMCCommand::executeMute)))
+                                            .executes(LipiCommand::executeMute)))
                             .then(CommandManager.literal("unmute")
                                     .then(CommandManager.argument("player", GameProfileArgumentType.gameProfile())
-                                            .executes(ChatMCCommand::executeUnmute)))
+                                            .executes(LipiCommand::executeUnmute)))
                             .then(CommandManager.literal("toggle")
-                                    .executes(ChatMCCommand::executeToggle))
+                                    .executes(LipiCommand::executeToggle))
                             .then(CommandManager.literal("log")
                                     .then(CommandManager.argument("player", StringArgumentType.word())
-                                            .executes(ChatMCCommand::executeLog)))
+                                            .executes(LipiCommand::executeLog)))
             );
         });
     }
@@ -59,20 +59,20 @@ public class ChatMCCommand {
             Collection<GameProfile> profiles = GameProfileArgumentType.getProfileArgument(context, "player");
 
             for (GameProfile profile : profiles) {
-                ChatMCServer.muteManager.mute(profile.getId());
+                LipiServer.muteManager.mute(profile.getId());
                 context.getSource().sendFeedback(
-                        () -> Text.literal("[ChatMC] ")
+                        () -> Text.literal("[Lipi] ")
                                 .formatted(Formatting.AQUA)
                                 .append(Text.literal("Muted player: " + profile.getName())
                                         .formatted(Formatting.YELLOW)),
                         true
                 );
-                ChatMC.LOGGER.info("Muted player: {} ({})", profile.getName(), profile.getId());
+                Lipi.LOGGER.info("Muted player: {} ({})", profile.getName(), profile.getId());
             }
 
             return profiles.size();
         } catch (Exception e) {
-            context.getSource().sendError(Text.literal("[ChatMC] Failed to mute player: " + e.getMessage()));
+            context.getSource().sendError(Text.literal("[Lipi] Failed to mute player: " + e.getMessage()));
             return 0;
         }
     }
@@ -82,52 +82,52 @@ public class ChatMCCommand {
             Collection<GameProfile> profiles = GameProfileArgumentType.getProfileArgument(context, "player");
 
             for (GameProfile profile : profiles) {
-                ChatMCServer.muteManager.unmute(profile.getId());
+                LipiServer.muteManager.unmute(profile.getId());
                 context.getSource().sendFeedback(
-                        () -> Text.literal("[ChatMC] ")
+                        () -> Text.literal("[Lipi] ")
                                 .formatted(Formatting.AQUA)
                                 .append(Text.literal("Unmuted player: " + profile.getName())
                                         .formatted(Formatting.GREEN)),
                         true
                 );
-                ChatMC.LOGGER.info("Unmuted player: {} ({})", profile.getName(), profile.getId());
+                Lipi.LOGGER.info("Unmuted player: {} ({})", profile.getName(), profile.getId());
             }
 
             return profiles.size();
         } catch (Exception e) {
-            context.getSource().sendError(Text.literal("[ChatMC] Failed to unmute player: " + e.getMessage()));
+            context.getSource().sendError(Text.literal("[Lipi] Failed to unmute player: " + e.getMessage()));
             return 0;
         }
     }
 
     private static int executeToggle(CommandContext<ServerCommandSource> context) {
-        boolean newState = !ChatMCServer.config.isEnabled();
-        ChatMCServer.config.setEnabled(newState);
-        ChatMCServer.config.save();
+        boolean newState = !LipiServer.config.isEnabled();
+        LipiServer.config.setEnabled(newState);
+        LipiServer.config.save();
 
         String statusText = newState ? "enabled" : "disabled";
         Formatting color = newState ? Formatting.GREEN : Formatting.RED;
 
         context.getSource().sendFeedback(
-                () -> Text.literal("[ChatMC] ")
+                () -> Text.literal("[Lipi] ")
                         .formatted(Formatting.AQUA)
-                        .append(Text.literal("ChatMC has been " + statusText + ".")
+                        .append(Text.literal("Lipi has been " + statusText + ".")
                                 .formatted(color)),
                 true
         );
 
-        ChatMC.LOGGER.info("ChatMC toggled: {}", statusText);
+        Lipi.LOGGER.info("Lipi toggled: {}", statusText);
         return 1;
     }
 
     private static int executeLog(CommandContext<ServerCommandSource> context) {
         String playerName = StringArgumentType.getString(context, "player");
 
-        List<String> messages = ChatMCServer.chatLogger.getPlayerMessages(playerName, 10);
+        List<String> messages = LipiServer.chatLogger.getPlayerMessages(playerName, 10);
 
         if (messages.isEmpty()) {
             context.getSource().sendFeedback(
-                    () -> Text.literal("[ChatMC] ")
+                    () -> Text.literal("[Lipi] ")
                             .formatted(Formatting.AQUA)
                             .append(Text.literal("No messages found for " + playerName + " in today's log.")
                                     .formatted(Formatting.GRAY)),
@@ -135,7 +135,7 @@ public class ChatMCCommand {
             );
         } else {
             context.getSource().sendFeedback(
-                    () -> Text.literal("[ChatMC] ")
+                    () -> Text.literal("[Lipi] ")
                             .formatted(Formatting.AQUA)
                             .append(Text.literal("Last " + messages.size() + " messages from " + playerName + ":")
                                     .formatted(Formatting.YELLOW)),

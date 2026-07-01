@@ -1,4 +1,4 @@
-package com.chatmc.network;
+package com.lipi.network;
 
 import net.minecraft.network.RegistryByteBuf;
 import net.minecraft.network.codec.PacketCodec;
@@ -17,7 +17,7 @@ public record ChatHistoryPayload(
 ) implements CustomPayload {
 
     public static final CustomPayload.Id<ChatHistoryPayload> ID =
-            new CustomPayload.Id<>(Identifier.of("chatmc", "chat_history"));
+            new CustomPayload.Id<>(Identifier.of("lipi", "chat_history"));
 
     public static final PacketCodec<RegistryByteBuf, ChatHistoryPayload> CODEC = PacketCodec.tuple(
             PacketCodecs.STRING.collect(PacketCodecs.toList()), ChatHistoryPayload::lines,

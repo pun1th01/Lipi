@@ -1,6 +1,6 @@
-package com.chatmc.client.gui;
+package com.lipi.client.gui;
 
-import com.chatmc.client.ChatMCClient;
+import com.lipi.client.LipiClient;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
@@ -9,15 +9,15 @@ import net.minecraft.client.gui.screen.ChatScreen;
 import net.minecraft.client.render.RenderTickCounter;
 
 /**
- * Renders the [ChatMC] indicator on the HUD when ChatMC mode is active
+ * Renders the [Lipi] indicator on the HUD when Lipi mode is active
  * and the chat screen is open.
  */
-public class ChatMCOverlay {
+public class LipiOverlay {
 
     private static final int TEAL_COLOR = 0x55FFFF;
     private static final int BACKGROUND_COLOR = 0x80000000; // Semi-transparent black
 
-    private ChatMCOverlay() {
+    private LipiOverlay() {
         // Utility class
     }
 
@@ -26,7 +26,7 @@ public class ChatMCOverlay {
      */
     public static void register() {
         HudRenderCallback.EVENT.register((DrawContext drawContext, RenderTickCounter tickCounter) -> {
-            if (!ChatMCClient.active) return;
+            if (!LipiClient.active) return;
 
             MinecraftClient client = MinecraftClient.getInstance();
 
@@ -35,7 +35,7 @@ public class ChatMCOverlay {
             if (client.currentScreen instanceof ChatScreen) return;
 
             TextRenderer textRenderer = client.textRenderer;
-            String indicator = "[ChatMC Active]";
+            String indicator = "[Lipi Active]";
             int textWidth = textRenderer.getWidth(indicator);
 
             int screenWidth = client.getWindow().getScaledWidth();

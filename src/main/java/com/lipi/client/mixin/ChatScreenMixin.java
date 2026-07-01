@@ -1,6 +1,6 @@
-package com.chatmc.client.mixin;
+package com.lipi.client.mixin;
 
-import com.chatmc.client.ChatMCClient;
+import com.lipi.client.LipiClient;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
@@ -13,8 +13,8 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * Mixin into ChatScreen to render the [ChatMC] indicator on the chat input bar
- * when ChatMC mode is active.
+ * Mixin into ChatScreen to render the [Lipi] indicator on the chat input bar
+ * when Lipi mode is active.
  */
 @Mixin(ChatScreen.class)
 public abstract class ChatScreenMixin {
@@ -26,17 +26,17 @@ public abstract class ChatScreenMixin {
     private static final int INDICATOR_BG_COLOR = 0xCC000000; // Semi-transparent black
 
     /**
-     * Injects at the end of render() to draw the [ChatMC] label
-     * on the chat input bar when ChatMC mode is active.
+     * Injects at the end of render() to draw the [Lipi] label
+     * on the chat input bar when Lipi mode is active.
      */
     @Inject(method = "render", at = @At("TAIL"))
-    private void renderChatMCIndicator(DrawContext context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
-        if (!ChatMCClient.active) return;
+    private void renderLipiIndicator(DrawContext context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
+        if (!LipiClient.active) return;
 
         MinecraftClient client = MinecraftClient.getInstance();
         TextRenderer textRenderer = client.textRenderer;
 
-        String indicator = "[ChatMC]";
+        String indicator = "[Lipi]";
         int textWidth = textRenderer.getWidth(indicator);
 
         // Position the indicator to the left of the chat input field
@@ -58,7 +58,7 @@ public abstract class ChatScreenMixin {
         // Draw background behind the indicator
         context.fill(x - 2, y - 2, x + textWidth + 2, y + 10, INDICATOR_BG_COLOR);
 
-        // Draw the [ChatMC] text in teal
+        // Draw the [Lipi] text in teal
         context.drawText(textRenderer, indicator, x, y, TEAL_COLOR, true);
     }
 }

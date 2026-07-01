@@ -1,5 +1,5 @@
 # ============================================================================
-# ChatMC — .gitignore
+# Lipi — .gitignore
 # Fabric Loom / Gradle / VS Code / Windows
 # ============================================================================
 
@@ -30,8 +30,8 @@ run/
 remappedSrc/
 
 # ---------- Mod runtime output (generated during testing) ----------
-# ChatMC writes chat logs here when run locally
-config/chatmc/logs/
+# Lipi writes chat logs here when run locally
+config/lipi/logs/
 
 # ---------- OS junk ----------
 .DS_Store

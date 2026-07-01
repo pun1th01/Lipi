@@ -1,6 +1,6 @@
-package com.chatmc.server.moderation;
+package com.lipi.server.moderation;
 
-import com.chatmc.ChatMC;
+import com.lipi.Lipi;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
@@ -13,12 +13,12 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Manages the in-memory mute list for ChatMC.
- * Persisted to config/chatmc/muted-players.json as a JSON array of UUID strings.
+ * Manages the in-memory mute list for Lipi.
+ * Persisted to config/lipi/muted-players.json as a JSON array of UUID strings.
  */
 public class MuteManager {
 
-    private static final Path MUTE_FILE = Path.of("config", "chatmc", "muted-players.json");
+    private static final Path MUTE_FILE = Path.of("config", "lipi", "muted-players.json");
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
     /** Thread-safe set of muted player UUIDs. */
@@ -73,14 +73,14 @@ public class MuteManager {
                     try {
                         mutedPlayers.add(UUID.fromString(uuidStr));
                     } catch (IllegalArgumentException e) {
-                        ChatMC.LOGGER.warn("Invalid UUID in mute list: {}", uuidStr);
+                        Lipi.LOGGER.warn("Invalid UUID in mute list: {}", uuidStr);
                     }
                 }
             }
 
-            ChatMC.LOGGER.info("Loaded {} muted players.", mutedPlayers.size());
+            Lipi.LOGGER.info("Loaded {} muted players.", mutedPlayers.size());
         } catch (IOException e) {
-            ChatMC.LOGGER.error("Failed to load muted players list", e);
+            Lipi.LOGGER.error("Failed to load muted players list", e);
         }
     }
 
@@ -99,7 +99,7 @@ public class MuteManager {
             String json = GSON.toJson(uuidStrings);
             Files.writeString(MUTE_FILE, json);
         } catch (IOException e) {
-            ChatMC.LOGGER.error("Failed to save muted players list", e);
+            Lipi.LOGGER.error("Failed to save muted players list", e);
         }
     }
 }

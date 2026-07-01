@@ -1,6 +1,6 @@
-package com.chatmc.server.log;
+package com.lipi.server.log;
 
-import com.chatmc.ChatMC;
+import com.lipi.Lipi;
 
 import java.io.IOException;
 import java.nio.file.*;
@@ -12,17 +12,17 @@ import java.util.*;
 import java.util.stream.Stream;
 
 /**
- * Flat-file chat logger for ChatMC.
- * Logs are stored in config/chatmc/logs/YYYY-MM-DD.log.
+ * Flat-file chat logger for Lipi.
+ * Logs are stored in config/lipi/logs/YYYY-MM-DD.log.
  *
  * Format per line:
  *   [2026-06-27 16:45:12] [GLOBAL] [uuid] playerName: message
- *   [2026-06-27 16:45:12] [JOIN] [uuid] playerName joined ChatMC
- *   [2026-06-27 16:45:12] [LEAVE] [uuid] playerName left ChatMC
+ *   [2026-06-27 16:45:12] [JOIN] [uuid] playerName joined Lipi
+ *   [2026-06-27 16:45:12] [LEAVE] [uuid] playerName left Lipi
  */
 public class ChatLogger {
 
-    private static final Path LOG_DIR = Path.of("config", "chatmc", "logs");
+    private static final Path LOG_DIR = Path.of("config", "lipi", "logs");
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private static final DateTimeFormatter DATETIME_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
@@ -30,7 +30,7 @@ public class ChatLogger {
         try {
             Files.createDirectories(LOG_DIR);
         } catch (IOException e) {
-            ChatMC.LOGGER.error("Failed to create ChatMC log directory", e);
+            Lipi.LOGGER.error("Failed to create Lipi log directory", e);
         }
     }
 
@@ -50,7 +50,7 @@ public class ChatLogger {
             Files.writeString(logFile, line + System.lineSeparator(),
                     StandardOpenOption.CREATE, StandardOpenOption.APPEND);
         } catch (IOException e) {
-            ChatMC.LOGGER.error("Failed to write to ChatMC log", e);
+            Lipi.LOGGER.error("Failed to write to Lipi log", e);
         }
     }
 
@@ -71,19 +71,19 @@ public class ChatLogger {
     }
 
     /**
-     * Logs a player joining ChatMC.
+     * Logs a player joining Lipi.
      */
     public void logJoin(UUID uuid, String playerName) {
-        String line = String.format("[%s] [JOIN] [%s] %s joined ChatMC",
+        String line = String.format("[%s] [JOIN] [%s] %s joined Lipi",
                 timestamp(), uuid, playerName);
         appendLine(line);
     }
 
     /**
-     * Logs a player leaving ChatMC.
+     * Logs a player leaving Lipi.
      */
     public void logLeave(UUID uuid, String playerName) {
-        String line = String.format("[%s] [LEAVE] [%s] %s left ChatMC",
+        String line = String.format("[%s] [LEAVE] [%s] %s left Lipi",
                 timestamp(), uuid, playerName);
         appendLine(line);
     }
@@ -109,7 +109,7 @@ public class ChatLogger {
             int start = Math.max(0, allLines.size() - count);
             return new ArrayList<>(allLines.subList(start, allLines.size()));
         } catch (IOException e) {
-            ChatMC.LOGGER.error("Failed to read ChatMC log", e);
+            Lipi.LOGGER.error("Failed to read Lipi log", e);
             return Collections.emptyList();
         }
     }
@@ -145,7 +145,7 @@ public class ChatLogger {
             int start = Math.max(0, filtered.size() - count);
             return new ArrayList<>(filtered.subList(start, filtered.size()));
         } catch (IOException e) {
-            ChatMC.LOGGER.error("Failed to read ChatMC log for player {}", playerName, e);
+            Lipi.LOGGER.error("Failed to read Lipi log for player {}", playerName, e);
             return Collections.emptyList();
         }
     }
@@ -175,15 +175,15 @@ public class ChatLogger {
             }).forEach(path -> {
                 try {
                     Files.delete(path);
-                    ChatMC.LOGGER.info("Deleted old ChatMC log: {}", path.getFileName());
+                    Lipi.LOGGER.info("Deleted old Lipi log: {}", path.getFileName());
                 } catch (IOException e) {
-                    ChatMC.LOGGER.error("Failed to delete old ChatMC log: {}", path.getFileName(), e);
+                    Lipi.LOGGER.error("Failed to delete old Lipi log: {}", path.getFileName(), e);
                 }
             });
         } catch (IOException e) {
-            ChatMC.LOGGER.error("Failed to clean old ChatMC logs", e);
+            Lipi.LOGGER.error("Failed to clean old Lipi logs", e);
         }
 
-        ChatMC.LOGGER.info("Log retention cleanup complete. Cutoff: {} days ({}).", retentionDays, cutoffDate);
+        Lipi.LOGGER.info("Log retention cleanup complete. Cutoff: {} days ({}).", retentionDays, cutoffDate);
     }
 }

@@ -1,4 +1,4 @@
-package com.chatmc.network;
+package com.lipi.network;
 
 import net.minecraft.network.RegistryByteBuf;
 import net.minecraft.network.codec.PacketCodec;
@@ -8,14 +8,14 @@ import net.minecraft.util.Identifier;
 
 /**
  * Server → Client packet.
- * Sent on player join to confirm that the server has ChatMC installed and whether it is active.
+ * Sent on player join to confirm that the server has Lipi installed and whether it is active.
  */
 public record ServerStatusPayload(
         boolean active
 ) implements CustomPayload {
 
     public static final CustomPayload.Id<ServerStatusPayload> ID =
-            new CustomPayload.Id<>(Identifier.of("chatmc", "server_status"));
+            new CustomPayload.Id<>(Identifier.of("lipi", "server_status"));
 
     public static final PacketCodec<RegistryByteBuf, ServerStatusPayload> CODEC = PacketCodec.tuple(
             PacketCodecs.BOOLEAN, ServerStatusPayload::active,

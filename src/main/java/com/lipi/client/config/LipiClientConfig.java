@@ -1,6 +1,6 @@
-package com.chatmc.client.config;
+package com.lipi.client.config;
 
-import com.chatmc.ChatMC;
+import com.lipi.Lipi;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -8,12 +8,12 @@ import java.nio.file.Path;
 import java.util.List;
 
 /**
- * Client-side configuration for ChatMC.
- * Stored in config/chatmc-client.toml.
+ * Client-side configuration for Lipi.
+ * Stored in config/lipi-client.toml.
  */
-public class ChatMCClientConfig {
+public class LipiClientConfig {
 
-    private static final Path CONFIG_PATH = Path.of("config", "chatmc-client.toml");
+    private static final Path CONFIG_PATH = Path.of("config", "lipi-client.toml");
 
     /** Alpha of the chat background rectangle (0.0 = fully transparent, 1.0 = opaque). Default 0.5. */
     private float chatBackgroundOpacity = 0.5f;
@@ -51,14 +51,14 @@ public class ChatMCClientConfig {
                     try {
                         setChatBackgroundOpacity(Float.parseFloat(value));
                     } catch (NumberFormatException e) {
-                        ChatMC.LOGGER.warn("Invalid chat-background-opacity value: {}", value);
+                        Lipi.LOGGER.warn("Invalid chat-background-opacity value: {}", value);
                     }
                 }
             }
 
-            ChatMC.LOGGER.info("ChatMC client config loaded. Opacity: {}", chatBackgroundOpacity);
+            Lipi.LOGGER.info("Lipi client config loaded. Opacity: {}", chatBackgroundOpacity);
         } catch (IOException e) {
-            ChatMC.LOGGER.error("Failed to load ChatMC client config", e);
+            Lipi.LOGGER.error("Failed to load Lipi client config", e);
         }
     }
 
@@ -70,7 +70,7 @@ public class ChatMCClientConfig {
             Files.createDirectories(CONFIG_PATH.getParent());
 
             String content = """
-                    # ChatMC Client Configuration
+                    # Lipi Client Configuration
                     
                     # Controls the transparency of the chat background (0.0 = transparent, 1.0 = opaque)
                     chat-background-opacity = %s
@@ -78,7 +78,7 @@ public class ChatMCClientConfig {
 
             Files.writeString(CONFIG_PATH, content);
         } catch (IOException e) {
-            ChatMC.LOGGER.error("Failed to save ChatMC client config", e);
+            Lipi.LOGGER.error("Failed to save Lipi client config", e);
         }
     }
 }

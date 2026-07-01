@@ -1,11 +1,11 @@
-package com.chatmc.server;
+package com.lipi.server;
 
-import com.chatmc.ChatMC;
-import com.chatmc.network.*;
-import com.chatmc.server.command.ChatMCCommand;
-import com.chatmc.server.config.ChatMCServerConfig;
-import com.chatmc.server.log.ChatLogger;
-import com.chatmc.server.moderation.MuteManager;
+import com.lipi.Lipi;
+import com.lipi.network.*;
+import com.lipi.server.command.LipiCommand;
+import com.lipi.server.config.LipiServerConfig;
+import com.lipi.server.log.ChatLogger;
+import com.lipi.server.moderation.MuteManager;
 import net.fabricmc.api.DedicatedServerModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
@@ -16,22 +16,22 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import java.util.List;
 
 /**
- * Server-side initializer for ChatMC.
+ * Server-side initializer for Lipi.
  * Handles incoming chat packets, broadcasting, logging, and admin commands.
  */
-public class ChatMCServer implements DedicatedServerModInitializer {
+public class LipiServer implements DedicatedServerModInitializer {
 
-    public static ChatMCServerConfig config;
+    public static LipiServerConfig config;
     public static ChatLogger chatLogger;
     public static MuteManager muteManager;
     public static MinecraftServer serverInstance;
 
     @Override
     public void onInitializeServer() {
-        ChatMC.LOGGER.info("ChatMC server initializing...");
+        Lipi.LOGGER.info("Lipi server initializing...");
 
         // Load server config
-        config = new ChatMCServerConfig();
+        config = new LipiServerConfig();
         config.load();
 
         // Initialize logger
@@ -54,7 +54,7 @@ public class ChatMCServer implements DedicatedServerModInitializer {
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
             ServerPlayerEntity player = handler.getPlayer();
 
-            // Check if the client has ChatMC installed (can receive our packets)
+            // Check if the client has Lipi installed (can receive our packets)
             if (ServerPlayNetworking.canSend(player, ServerStatusPayload.ID)) {
                 // Send server status
                 ServerPlayNetworking.send(player, new ServerStatusPayload(config.isEnabled()));
@@ -72,7 +72,7 @@ public class ChatMCServer implements DedicatedServerModInitializer {
                     }
                 }
 
-                ChatMC.LOGGER.info("Player {} has ChatMC installed. Sent status and history.", player.getName().getString());
+                Lipi.LOGGER.info("Player {} has Lipi installed. Sent status and history.", player.getName().getString());
             }
         });
 
@@ -84,7 +84,7 @@ public class ChatMCServer implements DedicatedServerModInitializer {
             }
         });
 
-        // Handle incoming ChatMC messages (C2S)
+        // Handle incoming Lipi messages (C2S)
         ServerPlayNetworking.registerGlobalReceiver(ChatMessagePayload.ID, (payload, context) -> {
             ServerPlayerEntity sender = context.player();
             MinecraftServer server = sender.getServer();
@@ -92,7 +92,7 @@ public class ChatMCServer implements DedicatedServerModInitializer {
             if (server == null) return;
 
             server.execute(() -> {
-                // Check if ChatMC is enabled
+                // Check if Lipi is enabled
                 if (!config.isEnabled()) {
                     return;
                 }
@@ -100,7 +100,7 @@ public class ChatMCServer implements DedicatedServerModInitializer {
                 // Check if the player is muted
                 if (muteManager.isMuted(sender.getUuid())) {
                     // Silently drop the message
-                    ChatMC.LOGGER.info("Dropped message from muted player: {}", sender.getName().getString());
+                    Lipi.LOGGER.info("Dropped message from muted player: {}", sender.getName().getString());
                     return;
                 }
 
@@ -123,7 +123,7 @@ public class ChatMCServer implements DedicatedServerModInitializer {
                         payload.channel()
                 );
 
-                // Broadcast to all players with ChatMC installed
+                // Broadcast to all players with Lipi installed
                 for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
                     if (ServerPlayNetworking.canSend(player, ChatBroadcastPayload.ID)) {
                         ServerPlayNetworking.send(player, broadcast);
@@ -133,8 +133,8 @@ public class ChatMCServer implements DedicatedServerModInitializer {
         });
 
         // Register admin commands
-        ChatMCCommand.register();
+        LipiCommand.register();
 
-        ChatMC.LOGGER.info("ChatMC server initialized.");
+        Lipi.LOGGER.info("Lipi server initialized.");
     }
 }

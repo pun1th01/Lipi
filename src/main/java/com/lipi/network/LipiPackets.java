@@ -1,14 +1,14 @@
-package com.chatmc.network;
+package com.lipi.network;
 
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 
 /**
- * Registers all ChatMC custom payload types with the Fabric networking API.
+ * Registers all Lipi custom payload types with the Fabric networking API.
  * Must be called from both client and server initializers (the shared ModInitializer).
  */
-public final class ChatMCPackets {
+public final class LipiPackets {
 
-    private ChatMCPackets() {
+    private LipiPackets() {
         // Utility class
     }
 
