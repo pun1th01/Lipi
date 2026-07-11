@@ -1,16 +1,14 @@
 package com.lipi.client.gui;
 
-import com.lipi.client.LipiClient;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.ChatScreen;
 import net.minecraft.client.render.RenderTickCounter;
 
 /**
- * Renders the [Lipi] indicator on the HUD when Lipi mode is active
- * and the chat screen is open.
+ * Renders the [Lipi] branding indicator on the HUD when the Lipi chat
+ * screen is open.
  */
 public class LipiOverlay {
 
@@ -26,16 +24,13 @@ public class LipiOverlay {
      */
     public static void register() {
         HudRenderCallback.EVENT.register((DrawContext drawContext, RenderTickCounter tickCounter) -> {
-            if (!LipiClient.active) return;
-
             MinecraftClient client = MinecraftClient.getInstance();
 
-            // Only show indicator when chat screen is NOT open (as a persistent reminder)
-            // The ChatScreenMixin handles the indicator when chat IS open
-            if (client.currentScreen instanceof ChatScreen) return;
+            // Only show the [Lipi] indicator when the LipiChatScreen is open
+            if (!(client.currentScreen instanceof LipiChatScreen)) return;
 
             TextRenderer textRenderer = client.textRenderer;
-            String indicator = "[Lipi Active]";
+            String indicator = "[Lipi]";
             int textWidth = textRenderer.getWidth(indicator);
 
             int screenWidth = client.getWindow().getScaledWidth();

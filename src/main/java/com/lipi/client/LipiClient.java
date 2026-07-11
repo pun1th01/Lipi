@@ -2,22 +2,20 @@ package com.lipi.client;
 
 import com.lipi.Lipi;
 import com.lipi.client.config.LipiClientConfig;
+import com.lipi.client.gui.LipiChatScreen;
 import com.lipi.client.gui.LipiOverlay;
 import com.lipi.network.ChatBroadcastPayload;
 import com.lipi.network.ChatHistoryPayload;
-import com.lipi.network.ChatMessagePayload;
 import com.lipi.network.ServerStatusPayload;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
-import net.fabricmc.fabric.api.client.message.v1.ClientSendMessageEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.text.MutableText;
-import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import org.lwjgl.glfw.GLFW;
@@ -25,16 +23,12 @@ import org.lwjgl.glfw.GLFW;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.util.UUID;
 
 /**
  * Client-side initializer for Lipi.
- * Handles keybind registration, chat interception, and network receivers.
+ * Handles keybind registration, screen opening, and network receivers.
  */
 public class LipiClient implements ClientModInitializer {
-
-    /** Whether Lipi mode is currently active (player is typing in Lipi mode). */
-    public static boolean active = false;
 
     /** Whether the current server supports Lipi (has the mod installed). */
     public static boolean serverSupported = false;
@@ -42,8 +36,8 @@ public class LipiClient implements ClientModInitializer {
     /** Whether Lipi is enabled on the server. */
     public static boolean serverEnabled = true;
 
-    /** The keybinding to toggle Lipi mode. */
-    private static KeyBinding toggleKey;
+    /** The keybinding to open the Lipi chat screen. */
+    private static KeyBinding openChatKey;
 
     /** Client config instance. */
     public static LipiClientConfig config;
@@ -59,8 +53,8 @@ public class LipiClient implements ClientModInitializer {
         config = new LipiClientConfig();
         config.load();
 
-        // Register keybind: Right Shift
-        toggleKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
+        // Register keybind: Right Shift to open Lipi chat screen
+        openChatKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
                 "key.lipi.toggle",
                 InputUtil.Type.KEYSYM,
                 GLFW.GLFW_KEY_RIGHT_SHIFT,
@@ -70,9 +64,9 @@ public class LipiClient implements ClientModInitializer {
         // Register overlay renderer
         LipiOverlay.register();
 
-        // Handle keybind press each tick
+        // Handle keybind press each tick — open LipiChatScreen
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            while (toggleKey.wasPressed()) {
+            while (openChatKey.wasPressed()) {
                 if (!serverSupported) {
                     // Server doesn't have Lipi
                     if (client.player != null) {
@@ -96,57 +90,9 @@ public class LipiClient implements ClientModInitializer {
                     return;
                 }
 
-                // Toggle active state
-                active = !active;
-
-                if (client.player != null) {
-                    if (active) {
-                        client.player.sendMessage(
-                                Text.literal("[Lipi] ")
-                                        .formatted(Formatting.AQUA)
-                                        .append(Text.literal("Chat mode activated. Messages will be sent via Lipi.")
-                                                .formatted(Formatting.GRAY)),
-                                false
-                        );
-                    } else {
-                        client.player.sendMessage(
-                                Text.literal("[Lipi] ")
-                                        .formatted(Formatting.AQUA)
-                                        .append(Text.literal("Chat mode deactivated. Using vanilla chat.")
-                                                .formatted(Formatting.GRAY)),
-                                false
-                        );
-                    }
-                }
+                // Open the Lipi chat screen
+                client.setScreen(new LipiChatScreen());
             }
-        });
-
-        // Intercept chat messages when Lipi is active
-        ClientSendMessageEvents.ALLOW_CHAT.register(message -> {
-            if (!active || !serverSupported || !serverEnabled) {
-                return true; // Allow vanilla chat
-            }
-
-            MinecraftClient client = MinecraftClient.getInstance();
-            if (client.player == null) return true;
-
-            // Send via Lipi packet instead
-            UUID playerUuid = client.player.getUuid();
-            String playerName = client.player.getName().getString();
-            long timestamp = System.currentTimeMillis();
-
-            ChatMessagePayload payload = new ChatMessagePayload(
-                    playerUuid,
-                    playerName,
-                    message,
-                    timestamp,
-                    "GLOBAL"
-            );
-
-            ClientPlayNetworking.send(payload);
-
-            // Cancel vanilla chat send
-            return false;
         });
 
         // Register network receivers for S2C packets
@@ -163,7 +109,7 @@ public class LipiClient implements ClientModInitializer {
                     client.player.sendMessage(
                             Text.literal("[Lipi] ")
                                     .formatted(Formatting.AQUA)
-                                    .append(Text.literal("Connected! Press Right Shift to toggle Lipi mode.")
+                                    .append(Text.literal("Connected! Press Right Shift to open Lipi chat.")
                                             .formatted(Formatting.GRAY)),
                             false
                     );
@@ -220,7 +166,6 @@ public class LipiClient implements ClientModInitializer {
 
         // Reset state when disconnecting
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
-            active = false;
             serverSupported = false;
             serverEnabled = true;
         });
