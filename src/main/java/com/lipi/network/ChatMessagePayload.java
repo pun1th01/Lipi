@@ -5,17 +5,14 @@ import net.minecraft.network.codec.PacketCodec;
 import net.minecraft.network.packet.CustomPayload;
 import net.minecraft.util.Identifier;
 
-import java.util.UUID;
-
 /**
  * Client → Server packet.
  * Sent when a player sends a message while Lipi mode is active.
+ * Only carries the message content and channel — the server derives
+ * sender identity and timestamp from the authenticated connection.
  */
 public record ChatMessagePayload(
-        UUID senderUuid,
-        String playerName,
         String message,
-        long timestamp,
         String channel
 ) implements CustomPayload {
 
@@ -24,17 +21,11 @@ public record ChatMessagePayload(
 
     public static final PacketCodec<RegistryByteBuf, ChatMessagePayload> CODEC = PacketCodec.of(
             (value, buf) -> {
-                buf.writeUuid(value.senderUuid());
-                buf.writeString(value.playerName());
                 buf.writeString(value.message());
-                buf.writeVarLong(value.timestamp());
                 buf.writeString(value.channel());
             },
             buf -> new ChatMessagePayload(
-                    buf.readUuid(),
                     buf.readString(),
-                    buf.readString(),
-                    buf.readVarLong(),
                     buf.readString()
             )
     );

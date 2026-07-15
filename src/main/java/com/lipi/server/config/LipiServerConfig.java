@@ -21,6 +21,15 @@ public class LipiServerConfig {
     /** Whether Lipi is enabled on the server. Default true. */
     private boolean enabled = true;
 
+    /** Maximum allowed message length. Default 256. */
+    private int maxMessageLength = 256;
+
+    /** Per-player message cooldown in seconds. 0 = disabled. */
+    private int messageCooldownSeconds = 0;
+
+    /** Global slow mode in seconds. 0 = disabled. */
+    private int slowModeSeconds = 0;
+
     public int getLogRetentionDays() {
         return logRetentionDays;
     }
@@ -35,6 +44,30 @@ public class LipiServerConfig {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+
+    public int getMaxMessageLength() {
+        return maxMessageLength;
+    }
+
+    public void setMaxMessageLength(int length) {
+        this.maxMessageLength = Math.max(1, length);
+    }
+
+    public int getMessageCooldownSeconds() {
+        return messageCooldownSeconds;
+    }
+
+    public void setMessageCooldownSeconds(int seconds) {
+        this.messageCooldownSeconds = Math.max(0, seconds);
+    }
+
+    public int getSlowModeSeconds() {
+        return slowModeSeconds;
+    }
+
+    public void setSlowModeSeconds(int seconds) {
+        this.slowModeSeconds = Math.max(0, seconds);
     }
 
     /**
@@ -67,6 +100,27 @@ public class LipiServerConfig {
                         }
                     }
                     case "enabled" -> setEnabled(Boolean.parseBoolean(value));
+                    case "max-message-length" -> {
+                        try {
+                            setMaxMessageLength(Integer.parseInt(value));
+                        } catch (NumberFormatException e) {
+                            Lipi.LOGGER.warn("Invalid max-message-length value: {}", value);
+                        }
+                    }
+                    case "message-cooldown-seconds" -> {
+                        try {
+                            setMessageCooldownSeconds(Integer.parseInt(value));
+                        } catch (NumberFormatException e) {
+                            Lipi.LOGGER.warn("Invalid message-cooldown-seconds value: {}", value);
+                        }
+                    }
+                    case "slow-mode-seconds" -> {
+                        try {
+                            setSlowModeSeconds(Integer.parseInt(value));
+                        } catch (NumberFormatException e) {
+                            Lipi.LOGGER.warn("Invalid slow-mode-seconds value: {}", value);
+                        }
+                    }
                 }
             }
 
@@ -92,7 +146,16 @@ public class LipiServerConfig {
                     
                     # Whether Lipi is enabled on this server.
                     enabled = %s
-                    """.formatted(logRetentionDays, enabled);
+                    
+                    # Maximum allowed message length (characters). Messages longer than this are rejected.
+                    max-message-length = %d
+                    
+                    # Per-player cooldown between messages in seconds. 0 = no cooldown.
+                    message-cooldown-seconds = %d
+                    
+                    # Global slow mode: minimum gap between any two messages in seconds. 0 = disabled.
+                    slow-mode-seconds = %d
+                    """.formatted(logRetentionDays, enabled, maxMessageLength, messageCooldownSeconds, slowModeSeconds);
 
             Files.writeString(CONFIG_PATH, content);
         } catch (IOException e) {

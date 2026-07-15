@@ -14,6 +14,8 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 
 import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Server-side initializer for Lipi.
@@ -25,6 +27,12 @@ public class LipiServer implements DedicatedServerModInitializer {
     public static ChatLogger chatLogger;
     public static MuteManager muteManager;
     public static MinecraftServer serverInstance;
+
+    /** Per-player cooldown tracking: UUID → last message timestamp (epoch millis). */
+    private static final ConcurrentHashMap<UUID, Long> playerCooldowns = new ConcurrentHashMap<>();
+
+    /** Global slow mode tracking: last message timestamp from any player. */
+    private static long lastGlobalMessage = 0;
 
     @Override
     public void onInitializeServer() {
@@ -64,9 +72,11 @@ public class LipiServer implements DedicatedServerModInitializer {
                     chatLogger.logJoin(player.getUuid(), player.getName().getString());
                 }
 
-                // Send chat history (last 20 messages from today)
+                // Send chat history (last 20 chat messages from today, excluding JOIN/LEAVE)
                 if (config.isEnabled()) {
-                    List<String> history = chatLogger.getLastMessages(20);
+                    List<String> history = chatLogger.getLastMessages(20).stream()
+                            .filter(line -> !line.contains("[JOIN]") && !line.contains("[LEAVE]"))
+                            .toList();
                     if (!history.isEmpty()) {
                         ServerPlayNetworking.send(player, new ChatHistoryPayload(history));
                     }
@@ -104,22 +114,69 @@ public class LipiServer implements DedicatedServerModInitializer {
                     return;
                 }
 
+                // Derive identity server-side — never trust client-supplied values
+                UUID senderUuid = sender.getUuid();
+                String senderName = sender.getName().getString();
+                long now = System.currentTimeMillis();
+                String message = payload.message();
+
+                // Validate message length
+                if (message.length() > config.getMaxMessageLength()) {
+                    sender.sendMessage(
+                            net.minecraft.text.Text.literal("[Lipi] Message too long (max " + config.getMaxMessageLength() + " characters)")
+                                    .formatted(net.minecraft.util.Formatting.RED),
+                            false
+                    );
+                    return;
+                }
+
+                // Per-player cooldown check
+                int cooldownSec = config.getMessageCooldownSeconds();
+                if (cooldownSec > 0) {
+                    Long lastTime = playerCooldowns.get(senderUuid);
+                    if (lastTime != null && (now - lastTime) < cooldownSec * 1000L) {
+                        long remaining = (cooldownSec * 1000L - (now - lastTime)) / 1000 + 1;
+                        sender.sendMessage(
+                                net.minecraft.text.Text.literal("[Lipi] Please wait " + remaining + "s before sending another message")
+                                        .formatted(net.minecraft.util.Formatting.YELLOW),
+                                false
+                        );
+                        return;
+                    }
+                }
+
+                // Global slow mode check
+                int slowModeSec = config.getSlowModeSeconds();
+                if (slowModeSec > 0 && (now - lastGlobalMessage) < slowModeSec * 1000L) {
+                    long remaining = (slowModeSec * 1000L - (now - lastGlobalMessage)) / 1000 + 1;
+                    sender.sendMessage(
+                            net.minecraft.text.Text.literal("[Lipi] Slow mode active. Please wait " + remaining + "s")
+                                    .formatted(net.minecraft.util.Formatting.YELLOW),
+                            false
+                    );
+                    return;
+                }
+
+                // Update cooldown trackers
+                playerCooldowns.put(senderUuid, now);
+                lastGlobalMessage = now;
+
                 // Log the message
                 if (config.getLogRetentionDays() > 0) {
                     chatLogger.logMessage(
-                            payload.senderUuid(),
-                            payload.playerName(),
+                            senderUuid,
+                            senderName,
                             payload.message(),
                             payload.channel()
                     );
                 }
 
-                // Create broadcast payload
+                // Create broadcast payload with server-derived identity
                 ChatBroadcastPayload broadcast = new ChatBroadcastPayload(
-                        payload.senderUuid(),
-                        payload.playerName(),
+                        senderUuid,
+                        senderName,
                         payload.message(),
-                        payload.timestamp(),
+                        now,
                         payload.channel()
                 );
 

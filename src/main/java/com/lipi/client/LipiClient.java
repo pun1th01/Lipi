@@ -15,14 +15,12 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
-import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import org.lwjgl.glfw.GLFW;
 
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Client-side initializer for Lipi.
@@ -42,8 +40,9 @@ public class LipiClient implements ClientModInitializer {
     /** Client config instance. */
     public static LipiClientConfig config;
 
-    private static final DateTimeFormatter TIME_FORMATTER =
-            DateTimeFormatter.ofPattern("HH:mm:ss").withZone(ZoneId.systemDefault());
+    /** Pattern to parse history log lines: [timestamp] [CHANNEL] [uuid] playerName: message */
+    private static final Pattern HISTORY_PATTERN =
+            Pattern.compile("\\[(.+?)\\] \\[(.+?)\\] \\[(.+?)\\] (.+?): (.+)");
 
     @Override
     public void onInitializeClient() {
@@ -109,58 +108,48 @@ public class LipiClient implements ClientModInitializer {
                     client.player.sendMessage(
                             Text.literal("[Lipi] ")
                                     .formatted(Formatting.AQUA)
-                                    .append(Text.literal("Connected! Press Right Shift to open Lipi chat.")
-                                            .formatted(Formatting.GRAY)),
+                                    .append(Text.literal("Press Right Shift to open Lipi chat.")
+                                        .formatted(Formatting.GRAY)),
                             false
                     );
                 }
             });
         });
 
-        // Chat broadcast - incoming messages from other players
+        // Chat broadcast — route to LipiMessageStore (NOT vanilla chat)
         ClientPlayNetworking.registerGlobalReceiver(ChatBroadcastPayload.ID, (payload, context) -> {
             context.client().execute(() -> {
-                MinecraftClient client = context.client();
-                if (client.inGameHud == null) return;
-
-                String timeStr = TIME_FORMATTER.format(Instant.ofEpochMilli(payload.timestamp()));
-
-                // Format: [Lipi] [HH:mm:ss] playerName: message
-                MutableText chatText = Text.literal("")
-                        .append(Text.literal("[Lipi] ").styled(s -> s.withColor(0x55FFFF)))
-                        .append(Text.literal("[" + timeStr + "] ").formatted(Formatting.DARK_GRAY))
-                        .append(Text.literal(payload.playerName()).formatted(Formatting.WHITE))
-                        .append(Text.literal(": ").formatted(Formatting.GRAY))
-                        .append(Text.literal(payload.message()).formatted(Formatting.WHITE));
-
-                client.inGameHud.getChatHud().addMessage(chatText);
+                LipiMessageStore.addMessage(new LipiMessageStore.LipiMessage(
+                        payload.playerName(),
+                        payload.message(),
+                        payload.timestamp(),
+                        payload.channel()
+                ));
             });
         });
 
-        // Chat history - past messages rendered in italic grey
+        // Chat history — parse log lines and route to LipiMessageStore
         ClientPlayNetworking.registerGlobalReceiver(ChatHistoryPayload.ID, (payload, context) -> {
             context.client().execute(() -> {
-                MinecraftClient client = context.client();
-                if (client.inGameHud == null) return;
-
-                if (!payload.lines().isEmpty()) {
-                    // Header
-                    client.inGameHud.getChatHud().addMessage(
-                            Text.literal("--- Lipi History ---")
-                                    .styled(s -> s.withColor(0x55FFFF).withItalic(true))
-                    );
-
-                    for (String line : payload.lines()) {
-                        MutableText historyText = Text.literal(line)
-                                .styled(s -> s.withColor(0xAAAAAA).withItalic(true));
-                        client.inGameHud.getChatHud().addMessage(historyText);
+                for (String line : payload.lines()) {
+                    Matcher m = HISTORY_PATTERN.matcher(line);
+                    if (m.matches()) {
+                        String senderName = m.group(4);
+                        String message = m.group(5);
+                        String channel = m.group(2);
+                        // History messages use timestamp 0 — they pre-date the session
+                        LipiMessageStore.addMessage(new LipiMessageStore.LipiMessage(
+                                senderName, message, 0L, channel
+                        ));
+                    } else {
+                        // Fallback: store raw line with "Server" as sender
+                        LipiMessageStore.addMessage(new LipiMessageStore.LipiMessage(
+                                "Server", line, 0L, "GLOBAL"
+                        ));
                     }
-
-                    client.inGameHud.getChatHud().addMessage(
-                            Text.literal("--- End History ---")
-                                    .styled(s -> s.withColor(0x55FFFF).withItalic(true))
-                    );
                 }
+                // History messages shouldn't count as unread
+                LipiMessageStore.markAllRead();
             });
         });
 
@@ -168,6 +157,7 @@ public class LipiClient implements ClientModInitializer {
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
             serverSupported = false;
             serverEnabled = true;
+            LipiMessageStore.clear();
         });
 
         Lipi.LOGGER.info("Lipi client initialized.");
