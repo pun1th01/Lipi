@@ -1,105 +1,130 @@
 # Lipi
 
+![Minecraft 1.21.5](https://img.shields.io/badge/Minecraft-1.21.5-brightgreen) ![Fabric](https://img.shields.io/badge/Mod%20Loader-Fabric-blue) ![Java 21](https://img.shields.io/badge/Java-21-orange) ![Alpha](https://img.shields.io/badge/Status-Alpha-yellow) ![MIT License](https://img.shields.io/badge/License-MIT-green) [![Sponsor](https://img.shields.io/github/sponsors/pun1th01?label=Sponsor&logo=GitHub)](https://github.com/sponsors/pun1th01)
+
 **An independent, server-controlled chat platform for Fabric Minecraft servers.**
 
-![Minecraft 1.21.5](https://img.shields.io/badge/Minecraft-1.21.5-brightgreen)
-![Fabric](https://img.shields.io/badge/Mod%20Loader-Fabric-blue)
-![Alpha](https://img.shields.io/badge/Status-Alpha-orange)
-![MIT License](https://img.shields.io/badge/License-MIT-yellow)
+<p align="center">
+  <img src="src/main/resources/assets/lipi/icon.png" alt="Lipi logo" width="128" />
+</p>
 
 ---
 
-## What is Lipi
+## Why Lipi exists
 
-Lipi adds a completely independent chat channel that runs alongside vanilla Minecraft chat. It uses its own network packets — Lipi messages never touch the vanilla chat system.
+Minecraft's default chat system is tied to Microsoft account verification requirements. Some players are unable to complete that verification, which leaves them locked out of chat on servers — even when the server owner wants them to participate.
 
-**What it does:**
+Lipi adds an independent communication layer that the server owner fully controls. It runs completely alongside vanilla Minecraft chat without replacing or modifying it. Both Lipi chat and vanilla chat coexist — players can use either one freely.
 
-- Adds a second chat channel that operates independently of vanilla chat
-- Both systems coexist — players can use either one at any time
-- Messages are sent through custom network packets, not vanilla chat packets
-- The server owner has full control over Lipi: logging, moderation, and configuration
-
-**What it does NOT do:**
-
-- It does not modify, replace, or interfere with vanilla Minecraft chat
-- It does not alter any vanilla game behavior
-- It does not send messages through vanilla chat pathways
-
-Lipi is designed for small-scale private SMPs and friend group servers. It is not built for large public servers.
+Lipi is designed for small private SMPs and friend group servers where the owner wants full control over chat, logs, and moderation independent of Minecraft's default systems.
 
 ---
 
 ## Who is this for
 
-- **Small SMP server owners** who want a server-controlled chat layer independent of Minecraft's default systems
-- **Friend groups** running private Fabric servers
-- **Players whose Minecraft chat has been disabled** due to account verification requirements — Lipi provides an alternative communication channel for servers where the owner has chosen to install it
-- **Server owners** who want proper chat logging, moderation tools, and admin controls built in
+- **Players whose Minecraft chat has been disabled** due to account verification requirements
+- **Small SMP server owners** and friend groups running Fabric servers
+- **Server owners** who want chat logging, moderation tools, and admin controls they fully control
 
-**Not suitable for:** Large public servers. Lipi requires the mod installed on both the client and the server, which makes it impractical for open servers with many unmodded players.
+**Not suitable for large public servers.** Lipi requires the mod installed on both client AND server, which makes it impractical for open servers with many unmodded players.
 
 ---
 
 ## Important limitation
 
-Both the client **and** the server must have Lipi installed. Players without the mod cannot send or receive Lipi messages. If a player presses the Lipi keybind on a server without the mod, they will see a `"This server does not support Lipi"` message.
+Both the client **and** the server must have Lipi installed. Players without the mod cannot send or receive Lipi messages. They will see a notification that the server supports Lipi, but cannot participate until they install it.
 
-This is a known design constraint, not a bug. Lipi uses custom network packets, so both sides need to understand them.
+This is by design, not a bug. Lipi uses custom network packets that both sides need to understand.
 
 ---
 
 ## Features
 
-Every feature listed below is verified against the current source code.
+### Chat
 
-- **Dedicated chat screen** — Press Right Shift to open a standalone Lipi chat input screen. This is a custom screen, not a modification of the vanilla chat screen.
-- **Custom network packets** — All messages use Lipi's own packet system (`ChatMessagePayload`, `ChatBroadcastPayload`, `ChatHistoryPayload`, `ServerStatusPayload`), completely separate from vanilla.
-- **HUD indicator** — A `[Lipi]` badge renders at the top center of the screen when the Lipi chat screen is open.
-- **Input label** — A teal `[Lipi]` label appears above the chat input field on the Lipi chat screen.
-- **Chat history on join** — When joining a server, the last 20 messages from today's log are displayed in italic grey with `--- Lipi History ---` and `--- End History ---` markers.
-- **Server-side mute system** — Operators can silently mute players. Muted players' messages are dropped server-side without notification. Mute list is persisted to `config/lipi/muted-players.json`.
-- **Flat-file chat logging** — Messages, joins, and leaves are logged to daily local files in `config/lipi/logs/`. Old logs are automatically cleaned based on the configured retention period.
-- **Server toggle** — Operators can enable/disable Lipi at runtime. The state is persisted to the config file.
-- **Configurable background opacity** — The Lipi chat screen background transparency is configurable on the client side.
-- **Graceful fallback** — If the server doesn't support Lipi or has it disabled, players see a clear notice instead of errors.
-- **Command passthrough** — The Lipi chat screen routes `/` commands through Minecraft's command system, so server commands still work normally while the Lipi screen is open.
-- **Connection status** — On joining a supported server, players see a `[Lipi] Connected! Press Right Shift to open Lipi chat.` message.
+- Independent Lipi chat channel alongside vanilla chat — messages use custom network packets, never touching the vanilla chat system
+- Dedicated popup chat window — Lipi messages are displayed in their own window, not in vanilla chat
+- Left sidebar with `# general` channel
+- Messages show bold username + local `HH:MM` timestamp (player's own timezone)
+- Scrollable message history with smart auto-scroll
+- Chat history on join — last 20 messages sent before you connected (chat messages only, no join/leave events)
+
+### Input
+
+- **Right Shift** opens Lipi chat instantly
+- Input immediately focused — type right away, no clicking needed
+- **Enter** to send, **ESC** to close
+- Command suggestions when typing `/` (same as vanilla chat)
+- Run any Minecraft server command from the Lipi input field (e.g., `/gamemode creative`)
+
+### HUD indicator
+
+- Persistent **L** indicator visible on the right side of the screen during normal gameplay
+- Unread message badge with count (red badge, caps at `9+`)
+- Badge clears when you scroll to the bottom of messages in the Lipi window
+- Only visible on servers with Lipi installed
+- Hidden when the Lipi chat screen is open
+
+### Server-side logging
+
+- **Log location:** `config/lipi/logs/`
+- **Log filename format:** `YYYY-MM-DD.log` (one file per day)
+- **Log line format:**
+  ```
+  [2026-06-27 16:45:12] [GLOBAL] [player-uuid] PlayerName: message text
+  [2026-06-27 16:45:12] [JOIN] [player-uuid] PlayerName joined Lipi
+  [2026-06-27 16:45:12] [LEAVE] [player-uuid] PlayerName left Lipi
+  ```
+- **Retention:** controlled by `log-retention-days` config (default: 30 days)
+- **To keep logs forever:** set `log-retention-days = 0` to disable auto-deletion
 
 ---
 
 ## How to use
 
-### For server owners
-
-1. Download `lipi-mc1.21.5-2.0.0.jar`
-2. Download [Fabric API](https://modrinth.com/mod/fabric-api) for Minecraft 1.21.5
-3. Place both jars in your server's `mods/` folder
-4. Start the server — config files generate automatically at `config/lipi-server.toml`
-
-### For players
+### For server owners — Installation
 
 1. Install [Fabric Loader](https://fabricmc.net/) for Minecraft 1.21.5
-2. Download `lipi-mc1.21.5-2.0.0.jar`
-3. Download [Fabric API](https://modrinth.com/mod/fabric-api) for Minecraft 1.21.5
+2. Download [Fabric API](https://modrinth.com/mod/fabric-api) for 1.21.5
+3. Download `lipi-mc1.21.5-3.0.0.jar`
+4. Place both jars in your server's `mods/` folder
+5. Start the server — config generates automatically at `config/lipi-server.toml`
+6. Op yourself if needed: `op <username>` in the server console
+
+### For players — Installation
+
+1. Install [Fabric Loader](https://fabricmc.net/) for Minecraft 1.21.5
+2. Download [Fabric API](https://modrinth.com/mod/fabric-api) for 1.21.5
+3. Download `lipi-mc1.21.5-3.0.0.jar`
 4. Place both jars in your `.minecraft/mods/` folder
 5. Join a server that has Lipi installed
-6. Press **Right Shift** to open the Lipi chat screen
-7. Type your message and press **Enter**
-8. Press **ESC** to close
+
+### Daily usage
+
+| Action | How |
+|--------|-----|
+| Open Lipi chat | Press **Right Shift** |
+| Send a message | Type your message → **Enter** |
+| Run a server command | `/gamemode creative` → **Enter** |
+| Close Lipi chat | **ESC** |
+| Read older messages | Scroll up in the Lipi window |
+| Clear unread badge | Scroll back to the bottom of messages |
 
 ---
 
-## Commands
+## Admin commands
 
-All `/lipi` subcommands require **operator permission level 3**.
+| Command | Permission | Description |
+|---------|------------|-------------|
+| `/lipi mute <player>` | Operator (level 3) | Permanently mutes a player. Their Lipi messages are silently dropped server-side. |
+| `/lipi mute <player> <duration>` | Operator (level 3) | Temporarily mutes a player. Duration format: `10s`, `5m`, `1h`, `1d`. |
+| `/lipi unmute <player>` | Operator (level 3) | Removes the mute from a player. |
+| `/lipi mutelist` | Operator (level 3) | Lists all currently muted players with expiry info (permanent or time remaining). |
+| `/lipi toggle` | Operator (level 3) | Toggles Lipi on or off for the entire server. Updates the config file. |
+| `/lipi log <player>` | Operator (level 3) | Displays the last 10 Lipi messages from that player in today's log. |
 
-| Command | Who can use it | What it does |
-|---|---|---|
-| `/lipi mute <player>` | Operators (level 3) | Silently drops the specified player's Lipi messages server-side. The player is not notified. |
-| `/lipi unmute <player>` | Operators (level 3) | Removes the mute from the specified player. |
-| `/lipi toggle` | Operators (level 3) | Toggles Lipi on or off for the entire server. Updates the config file. |
-| `/lipi log <player>` | Operators (level 3) | Displays the last 10 Lipi messages from the specified player in today's log. |
+All admin commands require **operator level 3**.
+Temp mutes auto-expire without manual intervention.
 
 ---
 
@@ -107,77 +132,54 @@ All `/lipi` subcommands require **operator permission level 3**.
 
 ### Server — `config/lipi-server.toml`
 
-| Config key | Default | What it does |
-|---|---|---|
+| Config key | Default | Description |
+|------------|---------|-------------|
 | `enabled` | `true` | Whether Lipi is active on the server. Can also be toggled at runtime with `/lipi toggle`. |
-| `log-retention-days` | `30` | Number of days to retain log files. Set to `0` to disable logging entirely. |
+| `log-retention-days` | `30` | Number of days to retain log files. Set to `0` to disable auto-deletion. |
+| `max-message-length` | `256` | Maximum allowed message length in characters. Messages longer than this are rejected. |
+| `message-cooldown-seconds` | `0` | Per-player cooldown between messages in seconds. `0` = no cooldown. |
+| `slow-mode-seconds` | `0` | Global slow mode: minimum gap between any two messages in seconds. `0` = disabled. |
+
+Config file location: `config/lipi-server.toml`
+Generated automatically on first server start.
 
 ### Client — `config/lipi-client.toml`
 
-| Config key | Default | What it does |
-|---|---|---|
-| `chat-background-opacity` | `0.5` | Alpha value for the Lipi chat screen background (0.0 = fully transparent, 1.0 = fully opaque). |
+| Config key | Default | Description |
+|------------|---------|-------------|
+| `chat-background-opacity` | `0.5` | Alpha value for the Lipi chat window background. `0.0` = fully transparent, `1.0` = fully opaque. |
 
 ### Mute list — `config/lipi/muted-players.json`
 
-Managed via `/lipi mute` and `/lipi unmute`. Stores a JSON array of UUID strings. Manual edits require a server restart.
+Managed via `/lipi mute` and `/lipi unmute`. Stores muted player UUIDs with expiry timestamps. Manual edits require a server restart.
 
 ---
 
-## Logging
+## Viewing server logs
 
-### Where logs are stored
+Log files are stored on the server filesystem only. The mod developer has **zero access** to any data.
 
-`config/lipi/logs/YYYY-MM-DD.log` — one file per day.
-
-### Log format
-
-```
-[2026-06-27 16:45:12] [GLOBAL] [player-uuid] PlayerName: message text
-[2026-06-27 16:45:12] [JOIN] [player-uuid] PlayerName joined Lipi
-[2026-06-27 16:45:12] [LEAVE] [player-uuid] PlayerName left Lipi
-```
-
-### Log retention
-
-Configure `log-retention-days` in `config/lipi-server.toml`. Logs older than the configured number of days are automatically deleted on server start. Set to `0` to disable logging entirely.
-
-Server owners are responsible for their own logs and any applicable data policies.
+- **Log path:** `config/lipi/logs/`
+- **Log filenames:** `YYYY-MM-DD.log` (one file per day)
+- **Log line format:**
+  ```
+  [2026-06-27 16:45:12] [GLOBAL] [player-uuid] PlayerName: message text
+  [2026-06-27 16:45:12] [JOIN] [player-uuid] PlayerName joined Lipi
+  [2026-06-27 16:45:12] [LEAVE] [player-uuid] PlayerName left Lipi
+  ```
+- **To view logs:** open with any text editor (Notepad, VS Code, nano)
+- **In-game log access:** `/lipi log <player>` shows that player's last 10 messages directly in chat
+- **Retention:** controlled by the `log-retention-days` config key
+- **To keep logs forever:** set `log-retention-days = 0`
 
 ---
 
-## Known issues
+## Data and privacy
 
-Being honest about the current state:
-
-- **Incoming messages render in vanilla chat HUD** — Lipi messages from other players currently appear in the vanilla chat HUD, not in a dedicated Lipi window. This is the top-priority UI fix for Alpha V3.
-- **Chat history shows raw UUIDs** — The history lines sent on join include raw UUID strings. Cleanup is planned for Alpha V3.
-- **Timestamps show server time** — Message timestamps use the server's timezone, not the player's local time.
-- **No cross-version support** — 1.21.5 only. Backports are planned but not yet available.
-- **Silent mute system** — Muted players are not notified that they are muted. Their messages are silently dropped.
-- **Global-only messaging** — All messages go to a single global channel. No private messaging or multi-channel support yet.
-
----
-
-## Roadmap
-
-### Alpha V3 (next)
-
-- Dedicated Lipi chat window (incoming messages no longer rendered in vanilla chat HUD)
-- Timestamp format fix (HH:MM only)
-- UUID cleanup in chat history
-
-### Beta V1 (when UI is stable)
-
-- Multi-channel support
-- Media and GIF sharing
-- Improved moderation tools
-
-### Future
-
-- 1.21.1 backport
-- Forge/NeoForge port
-- Additional Minecraft version support
+- All data is stored on the server owner's filesystem
+- The mod developer has no access to any user data
+- Server operators are solely responsible for their own logs, moderation, and any applicable data policies
+- Players can ask their server owner to view or delete their chat history
 
 ---
 
@@ -185,7 +187,7 @@ Being honest about the current state:
 
 ### Requirements
 
-- JDK 21+
+- JDK 21 or higher
 - Gradle 8.14+
 
 ### Build
@@ -200,18 +202,54 @@ Being honest about the current state:
 
 ### Output
 
-`build/libs/lipi-mc1.21.5-2.0.0.jar`
+`build/libs/lipi-mc1.21.5-3.0.0.jar`
 
 ---
 
-## License
+## Roadmap
 
-Lipi is released under the [MIT License](LICENSE).
+### Alpha V3 (current)
 
-Copyright (c) 2026 Punith P.
+- Dedicated Lipi chat window ✅
+- Local timezone timestamps ✅
+- Security hardening ✅
+- Temp mute system ✅
+- Anti-spam config ✅
+
+### Beta V1 (planned)
+
+- Multi-version support (1.21.1, 1.20.1)
+- Multi-channel support
+- Media and GIF sharing
+- Improved moderation tools
+
+### Long term
+
+- Forge/NeoForge port
+- A full in-game communication platform that makes external apps like Discord optional for small servers
 
 ---
 
 ## Contributing
 
-Open issues for bugs. PRs welcome. This is a solo student project under active development.
+- Open issues on [GitHub](https://github.com/pun1th01/Lipi) for bug reports
+- PRs welcome
+- Solo student project — active development ongoing
+- College student building this in free time, development pace may vary during semester
+
+---
+
+## Support development
+
+If Lipi is useful to your server, consider sponsoring:
+**https://github.com/sponsors/pun1th01**
+
+Solo student project with no funding or team. Any support helps keep development active through college.
+
+---
+
+## License
+
+MIT License — see [LICENSE](https://github.com/pun1th01/Lipi/blob/main/LICENSE)
+
+Copyright (c) 2026 Punith P.
